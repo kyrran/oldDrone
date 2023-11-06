@@ -1,0 +1,9 @@
+{
+  "markdown.marp.themes": [
+    "./02_Progress_reports/template/custom-dracula.css",
+    "https://raw.githubusercontent.com/dracula/marp/master/dracula/dracula.css"
+  ],
+  "files.watcherExclude": {
+    "**/target": true
+  }
+}
