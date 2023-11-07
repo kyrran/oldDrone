@@ -7,6 +7,7 @@ _paginate: false # or use `_paginate: skip`
 
 # Agile Trajectory Generation for Tensile Perching with Aerial Robots
 
+![h:350](simple_drone_img.png)
 
 ---
 # Progress Update
