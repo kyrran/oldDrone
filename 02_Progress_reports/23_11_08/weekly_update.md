@@ -29,14 +29,13 @@ _paginate: false # or use `_paginate: skip`
 - Two phase - first phase cost of change in inputs, second phases penalised change from planned input.
 <!-- - Used a two-phase control design: the first phase plans a feasible trajectory, the second phase designs the actual controller. -->
 <!-- - reward function: 24 features: squared error state variables, the squared inputs, the squared change in inputs between consecutive timesteps, and the squared integral of the error state variables -->
-- Reward Function: Apprenticeship learning .
+<!-- - Reward Function: Apprenticeship learning . -->
 <!-- - apprentice- ship learning via inverse reinforcement learning algorithm [2]. The inverse RL algorithm iteratively provides us with reward weights that result in policies that bring us closer to the expert -->
 ---
 # General Plans
 - Unavailable Dates in README.md on OneDrive.
 - Gantt Chart on OneDrive 
   - Contains planned allocation of Work.
-  - Autumn Term 8hrs p/w
 ---
 # Plans Until Next
 ### Literature
@@ -50,3 +49,11 @@ _paginate: false # or use `_paginate: skip`
 ### Practical
 - Thoroughly go through drone_perching_main repo and attempt to reproduce results:
   - Approaching, Making Contact, Flipping, Setup PX4-Autopilot, QGroundcontrol, Gazebo Simulations
+---
+# Feedback
+Challenges
+- Simulation - Drone Dynamics 
+- Approaching - Swinging motion
+- Identify problem further
+- Aggressive "one shot" approach
+- Connect with previous people.
