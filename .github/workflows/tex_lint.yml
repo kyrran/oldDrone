@@ -34,7 +34,7 @@ jobs:
 
     - name: Run Mock Linter with Reviewdog
       env:
-        REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.PAT }}
+        REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         echo "03_Final_report_and_presentation/title/title.tex:1:1: warning: This is a mock warning [warning/category]" | reviewdog -f=eslint -name="mock-linter" -reporter=github-pr-review
         
