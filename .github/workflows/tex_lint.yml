@@ -27,7 +27,7 @@ jobs:
         import os, requests, json
         with open('textidote_output.txt', 'r') as file:
             warnings = file.readlines()
-        headers = {'Authorization': f'token {os.environ['GITHUB_TOKEN']}'}
+        headers = {'Authorization': f'token {os.environ[\"GITHUB_TOKEN\"]}'}
         comments_url = '${{ github.event.pull_request.comments_url }}'
         for warning in warnings:
             comment = {'body': warning}
