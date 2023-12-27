@@ -17,7 +17,7 @@ jobs:
     - name: Run TeXtidote
       run: |
         wget https://github.com/sylvainhalle/textidote/releases/download/v0.8.2/textidote.jar
-        java -jar textidote.jar --output html --check en *.tex > report.html
+        find 03_Final_report_and_presentation -name "*.tex" -exec java -jar textidote.jar --output html --check en {} \; > report.html
 
     - name: Upload TeXtidote Report
       uses: actions/upload-artifact@v2
