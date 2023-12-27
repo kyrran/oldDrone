@@ -29,4 +29,13 @@ jobs:
       run: |
         find 03_Final_report_and_presentation -name "*.tex" -exec java -jar textidote.jar --check en --output singleline {} \; \
           | reviewdog -efm="%f(L%lC%c-*): %m" -name="textidote" -reporter=github-pr-review -tee
+
+
+
+    - name: Run Mock Linter with Reviewdog
+      env:
+        REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.PAT }}
+      run: |
+        echo "03_Final_report_and_presentation/title/title.tex:1:1: warning: This is a mock warning [warning/category]" | reviewdog -f=eslint -name="mock-linter" -reporter=github-pr-review
+        
       
