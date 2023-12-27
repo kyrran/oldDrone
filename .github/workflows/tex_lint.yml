@@ -28,5 +28,5 @@ jobs:
         REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         find 03_Final_report_and_presentation -name "*.tex" -exec java -jar textidote.jar --check en --output line {} \; \
-          | reviewdog -f=textidote -name="textidote" -reporter=github-pr-review
+          | reviewdog -efm="%f(L%lC%c-*): %m" -name="textidote" -reporter=github-pr-review
       
