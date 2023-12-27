@@ -1,0 +1,26 @@
+name: LaTeX Linting with TeXtidote
+
+on: [pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Java
+      uses: actions/setup-java@v1
+      with:
+        java-version: '11' # TeXtidote requires Java
+
+    - name: Run TeXtidote
+      run: |
+        wget https://github.com/sylvainhalle/textidote/releases/download/v0.8.2/textidote.jar
+        java -jar textidote.jar --output html --check en *.tex > report.html
+
+    - name: Upload TeXtidote Report
+      uses: actions/upload-artifact@v2
+      with:
+        name: TeXtidote-Report
+        path: report.html
