@@ -17,6 +17,11 @@ jobs:
     - name: Run TeXtidote
       run: |
         wget https://github.com/sylvainhalle/textidote/releases/download/v0.8.2/textidote.jar
+
+    - name: Install Reviewdog
+      uses: reviewdog/action-setup@v1
+      with:
+        reviewdog_version: latest
     
     - name: Run textidote with reviewdog
       env:
