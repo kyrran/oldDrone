@@ -1,0 +1,41 @@
+name: Compile and Release LaTeX on Master
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Compile LaTeX Document
+      uses: xu-cheng/latex-action@v2
+      with:
+        root_file: 03_Final_report_and_presentation/main.tex
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: Compiled-PDF
+        path: 03_Final_report_and_presentation/main.pdf
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+        body: 'New release of Thesis'
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: 03_Final_report_and_presentation/main.pdf
+        asset_name: final_report.pdf
+        asset_content_type: application/pdf

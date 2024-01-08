@@ -1,0 +1,47 @@
+\documentclass[a4paper, twoside]{report}
+
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Project Title}
+\author{John Smith}
+% Update supervisor and other title stuff in title/title.tex
+
+\begin{document}
+\input{03_Final_report_and_presentation/title/title.tex}
+
+\begin{abstract}
+Your abstract goes here
+\end{abstract}
+
+\renewcommand{\abstractname}{Acknowledgements}
+\begin{abstract}
+Thanks mum!
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\input{03_Final_report_and_presentation/introduction/introduction.tex}
+\input{03_Final_report_and_presentation/background/background.tex}
+\input{03_Final_report_and_presentation/project/project.tex}
+\input{03_Final_report_and_presentation/evaluation/evaluation.tex}
+\input{03_Final_report_and_presentation/conclusion/conclusion.tex}
+\input{03_Final_report_and_presentation/appendix/appendix.tex}
+
+\bibliographystyle{alpha}
+\bibliography{03_Final_report_and_presentation/bibs/sample}
+
+\end{document}
