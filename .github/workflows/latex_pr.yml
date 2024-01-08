@@ -1,0 +1,16 @@
+name: Compile LaTeX on PR
+
+on: 
+  pull_request:
+    branches: 
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Compile LaTeX Document
+      uses: xu-cheng/latex-action@v2
+      with:
+        root_file: 03_Final_report_and_presentation/main.tex
