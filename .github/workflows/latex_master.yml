@@ -3,7 +3,7 @@ name: Compile and Release LaTeX on Master
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build-and-release:
