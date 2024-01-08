@@ -18,7 +18,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: Compiled-PDF
-        path: 03_Final_report_and_presentation/main.pdf
+        path: main.pdf
     - name: Extract branch name
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
@@ -40,6 +40,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: 03_Final_report_and_presentation/main.pdf
+        asset_path: main.pdf
         asset_name: final_report.pdf
         asset_content_type: application/pdf
