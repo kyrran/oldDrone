@@ -19,6 +19,10 @@ jobs:
       with:
         name: Compiled-PDF
         path: 03_Final_report_and_presentation/main.pdf
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -26,7 +30,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        release_name: Release ${{ steps.extract_branch.outputs.branch }}
         draft: false
         prerelease: false
         body: 'New release of Thesis'
