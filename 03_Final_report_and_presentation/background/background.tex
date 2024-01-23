@@ -28,8 +28,8 @@
 
 % Previous Work - Fabian
 The aim of this chapter is to provide an extensive review of perching techniques and automated trajectory generation, with a particular focus on methods that require minimum simulation interaction.
-In order, we will cover various perching approaches, previous work on automated perching and reinforcement learning with demonstrations.
-\todo{come back to this}
+In order, we will cover various perching approaches, previous work on automated perching, reinforcement learning, experience replay, inverse reinforcement learning, learning from demonstrations and transfer learning.
+
 \section{Perching Approaches}
 
 
@@ -68,7 +68,6 @@ Examples include the work by H. Zhang et al~\cite{perching-gripper1}, which disc
 Additionally, the research by A. McLaren et al~\cite{perching-gripper2} presents a sophisticated approach involving a three-fingered robotic hand, as illustrated in Figure~\ref{fig:perching-gripper2}.
 This hand wraps around a tree branch-like structure to keep the drone perched.
 
-
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=0.5\textwidth]{background/perching-tum.png}
@@ -80,19 +79,19 @@ Bioinspired perching mechanisms have also been proposed for UAVs~\cite{perching-
 This mechanism has the ability to exert a significant gripping force while consuming minimal power.
 To date, a prototype has been successfully tested, demonstrating its ability to perch onto a variety of branch-like objects under the control of a human pilot.
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.33\textwidth]{introduction/TetheredDrone.drawio.png}
+  \caption{Tethered Drone: A UAV with a tether attached to a small weight}
+\label{fig:background-tethered-drone}
+\end{figure}
+
 As discussed, much of the existing literature predominantly concentrates on the mechanical attachment process for the UAV.
 This project will instead focus towards a more flight-oriented approach.
 We will utilise a simple bioinspired tethered drone, as depicted in Figure~\ref{fig:background-tethered-drone}, and aim to automate the perching process.
 This UAV design incorporates a pendulum mechanism situated beneath the drone body, the pendulum is able to move freely under the drone.
 This mechanism is extremely straightforward from a mechanical perspective, it does not require any specialised hardware and can easily be retrofitted onto an existing UAV.
 Furthermore, unlike many other mechanical mechanisms, the diameter of the branch is not crucial, any branch that can hold the weight would be suitable.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.33\textwidth]{introduction/TetheredDrone.drawio.png}
-  \caption{Tethered Drone: A UAV with a tether attached to a small weight}
-\label{fig:background-tethered-drone}
-\end{figure}
 
 The perching manoeuvre involves the drone wrapping its tether around a branch and slowly disarming to suspend itself beneath the branch. 
 This state of suspension requires no energy to maintain. 
@@ -112,11 +111,10 @@ The trajectory was divided into three separate stages.
 The initial approach and contact phases used trajectories formulated using analytical solutions.
 The Reinforcement Learning aspect was specifically applied for the more complex manoeuvre of flipping the drone beneath the branch.
 
-\todo{diagram for this manoeuvre}
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.33\textwidth]{frog.png}
-  \caption{TODO}
+  \includegraphics[width=\textwidth]{introduction/dronePerching.png}
+  \caption{The 3-step process showing the drone attaching to a branch.}
 \label{fig:previous-work-manuever-diagram}
 \end{figure}
 
@@ -193,14 +191,15 @@ The problem of trajectory generation for drone perching has a large overlap with
 Therefore when investigating work on reinforcement learning this was a particular area that was focussed on since the objective is largely the same.
 In 2022 a review paper~\cite{aerialNavReview} on UAV navigation using RL identified 159 papers that use RL to solve UAV navigation challenges.
 Within path planning the review described papers based on both mapless and map-based navigation.
-A map-based navigation approach uses a representation of the environment, largely including terrain or obstacles.
+A map-based navigation approach uses an internal representation of the area, largely including terrain or obstacles.
 Within drone perching this would likely relate to s \todo{finish this}
 
 However one of the major limitations of traditional reinforcement learning in this context is the high number of episodes required to train.
 For navigation tasks, this can be simulated reasonably well, however, as discussed in Section~\ref{sec:background-prev-work}, this is more difficult. \\\\
 
 % FYP8 Human-Level Control through Deep Reinforcement Learning
-The development of Deep Q-Networks combining neural networks with reinforcement learning has proved extremely successful in the Atari Games, a popular benchmark in RL.
+
+The development of Deep Q-Networks utilising neural networks combined with reinforcement learning has proved extremely successful in the Atari Games, a popular benchmark in RL.
 Human-level control was achieved in the Atari Gameset using a deep Q-network (DQN)~\cite{humanLevelControlDQN}.
 This was primarily due to the innovative approximation of the Q-value function using a neural network.
 Another one of the major innovations was the use of experience replay.
@@ -223,6 +222,13 @@ It will therefore be interesting to examine this particular propery in a drone e
 
 %     - FYP12/23 - Autonomous Waypoint Navigation
 
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.8\textwidth]{background/fyp12-waypoint-nav-framework.png}
+  \caption{Waypoint Navigation Framework taken from~\cite{fyp12-waypoint-navigation}}
+\label{fig:fyp12-waypoint-nav-framework}
+\end{figure}
+
 In the area of autonomous waypoint navigation, various methods have been explored and implemented.
 One of the primary challenges is operating in a continuous environment, which adds complexity to the training process.
 A common strategy involves discretising the environment, enhancing the performance by simplifying the state space.
@@ -240,31 +246,29 @@ The lower-level component creates smooth trajectories through these waypoints an
 The overall goal of the system is to produce seamless trajectories that avoid obstacles within known 3D environments.
 This goal significantly resembles the drone perching task, making it an interesting paper to examine.
 
-\todo{do this diagram}
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=0.5\textwidth]{background/fyp12-waypoint-nav-framework.png}
-  \caption{Waypoint Navigation Framework}
-\label{fig:fyp12-waypoint-nav-framework}
-\end{figure}
-
 At the higher level, the system utilises a Deep Q-Network (DQN).
 The 3D environment is discretised into an N x N x N grid, where actions are defined as potential waypoints in a 3 x 3 x 3 grid surrounding the current position.
 This gives 26 potential actions for each state.
 Convolutional Neural Networks (CNNs) are used to process the 3D input state (the known 3D environment) with a fully-connected output layer, with 26 neurons, each corresponding to one of the possible actions.
 
-The reward is defined as the weighted sum of two components:
-\[R(s, a) = \alpha R_{p} + \beta R_{c}\]
+The reward is defined as the weighted sum defined in Equation~\ref{eq:fyp12-reward-general}.
 
-where $R_{p}$ is the position reward:
-\[
-R_{p}(s, a) = 
-\begin{cases} 
-10 & \text{reach the target position} \\
--10 & \text{collide with obstacle} \\
-0 & \text{otherwise}
-\end{cases}
-\]
+\begin{equation}
+  R(s, a) = \alpha R_{p} + \beta R_{c}
+  \label{eq:fyp12-reward-general}
+\end{equation}
+
+where $R_{p}$ is the position reward defined in Equation~\ref{eq:fyp12-specific}.
+
+\begin{equation}
+  R_{p}(s, a) = 
+  \begin{cases} 
+  10 & \text{reach the target position} \\
+  -10 & \text{collide with obstacle} \\
+  0 & \text{otherwise}
+  \end{cases}
+\label{eq:fyp12-specific}
+\end{equation}
 
 and $R_{c}$ represents the control reward, defined as the negative L1 norm of the thurst cost, provided by the lower level system.
 This balances the reward between reaching targets, avoiding obstacles and minimising cost.
@@ -288,8 +292,8 @@ Gaussian Noise layers were introduced after the CNN and after the duelling neura
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.5\textwidth]{background/fyp13-noise-injection.png}
-  \caption{Double Duelling Deep Q Network with Gaussian Noise Injection}
+  \includegraphics[width=0.8\textwidth]{background/fyp13-noise-injection.png}
+  \caption{Double Duelling Deep Q Network with Gaussian Noise Injection taken from~\cite{fyp13-noise-injection}}
 \label{fig:fyp13-d3qn-noise}
 \end{figure}
 
@@ -303,7 +307,7 @@ The introduction of Gaussian Noise as a form of regularisation in D3QN presents 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.5\textwidth]{background/fyp13-noise-results.png}
-  \caption{Mean Q values of D3QN and D3QN with GN Injection}
+  \caption{Mean Q values of D3QN and D3QN with GN Injection taken from~\cite{fyp13-noise-injection}}
 \label{fig:fyp13-results}
 \end{figure}
 
@@ -326,15 +330,19 @@ This error is then used to form a prioritized sampling queue.
 However, since the values associated with each experience are only updated when an experience is replayed, a purely greedy sampling approach will overlook episodes that initially have low scores.
 To counter this limitation, a stochastic sampling method was introduced.
 
-The probability of a transition being sampled is given by:
+The probability of a transition being sampled is given by Equation~\ref{eq:fyp16-sample-prob}.
 
-\[ P(i) = \frac{p_{i}^{\alpha}}{\sum_{k} p_{k}^{\alpha}} \]
+\begin{equation}
+  P(i) = \frac{p_{i}^{\alpha}}{\sum_{k} p_{k}^{\alpha}}
+  \label{eq:fyp16-sample-prob}
+\end{equation}
+
 where: $p_{i} = |\delta_{i}| + \epsilon$ and $\epsilon$ is a small positive constant that ensures every transition has a nonzero probability of being sampled.
 While Prioritised Sampling is beneficial, it introduces some bias into the learning process, meaning that corrective measures are necessary. 
 The importance sampling weight $w_j$ is shown in Algorithm~\ref{alg:fyp-16-prioritised-experience-replay}.
 
 \begin{algorithm}
-  \caption{Minibatch sampling for Priorisied Experience Replay}
+  \caption{Minibatch sampling for Priorisied Experience Replay taken from~\ref{alg:fyp-16-prioritised-experience-replay}}
   \label{alg:fyp-16-prioritised-experience-replay}
   \begin{algorithmic}[1]
   \For{$j = 1$ \textbf{to} $minibatch$ $size$}
@@ -360,8 +368,8 @@ However, an algorithm, Forgetful Experience Replay (ForgER) specifically focuses
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=0.6\textwidth]{background/fyp16-forger-arch.png}
-  \caption{ForgER with dynamic sampling between demonstration and own experience buffers.}
+  \includegraphics[width=0.8\textwidth]{background/fyp16-forger-arch.png}
+  \caption{ForgER with dynamic sampling between demonstration and own experience buffers taken from~\cite{fyp16-forgetful-experience-replay}}
 \label{fig:fyp16-forger-arch}
 \end{figure}
 
@@ -379,8 +387,13 @@ The second strategy entails storing data in two separate buffers and sampling ev
 The third, and the method proposed by this paper, dynamically adjusts the sampling ratio between the two buffers, as shown in Figure~\ref{fig:fyp16-forger-arch}.
 
 In this context, forgetting is the process of gradually reducing the dependency on demonstration data as the agent progressively learns from its own experiences.
-This can be implemented linearly as: 
-\[f_{rg}(k) = \min(1, k/d)\]
+This can be implemented linearly as in Equation~\ref{eq:fyp16-linear-forgetting}.
+
+\begin{equation}
+  f_{rg}(k) = \min(1, k/d)
+  \label{eq:fyp16-linear-forgetting}
+\end{equation}
+
 This effectively manages the balance between leveraging demonstration data and incorporating the agent's personal experiences.
 This presents an interesting approach to utilising demonstration data, ensuring a balance between the integration of expert knowledge with the agent's autonomously gained insights. \\\\
 
@@ -417,12 +430,12 @@ More recent advancements in integrating demonstration data in training have util
 An algorithm, Deep Q-learning from Demonstrations (DQfD) was developed that makes use of a very small set of demonstration data to speed up the training time.
 The performance of DQfD was evaluated using Atari Games, a popular benchmark in RL, DQfD outperformed its counterparts during the first million stages on 41 of 42 games and achieved state-of-the-art scores in 11 games.
 This research was motivated by the unavailability of an accurate simulation environment.
-DQfD incorporates a pre-training phase where the agent samples from demonstration datasets.
+DQfD incorporates a primary phase where the agent samples purely from a set of demonstrations.
 Multiple loss functions were employed, including supervised loss which was essential for the pre-training phase.
 By its nature, demonstration data covers a very narrow margin of the state space, often excluding potentially hazardous actions.
 However, simply using the demonstration data as part of an experience replay buffer is not sufficient as the agent will not adequately learn that these non-provided actions are more likely to be dangerous.
 Without this supervised loss, the agent might favour these unseen areas of the state space which are likely to contain dangerous actions.
-L2 regularisation loss was applied to the weights and biases of the network to ensure that the agent doesn't overfit considering the very small number of demonstration examples.
+L2 regularisation loss was used upon the weights and biases in the network to ensure that the agent doesn't overfit considering the very small number of demonstration examples.
 By incorporating these elements, DQfD accelerates the training process.
 
 Once pre-training is complete, the system begins interacting with the actual environment, collecting additional data in a manner similar to standard DQN learning.
@@ -450,6 +463,47 @@ It is not immediately clear how to balance rewards between actually achieving th
 This makes evaluating the performance less clear.
 This makes the task of defining a reward function more complex and less straightforward to define. \\\\
 
+In other areas of Reinforcement Learning variants of the Soft Actor Critic Algorithm have performed well.
+Motivated by the lack of success from DQfD in complex environments, an algorithm, Soft Actor Critic from Demonstrations (SACfD) was proposed~\cite{SACfDMaplessNavigation}.
+This aimed to combine the strong success of SAC algorithms in complex environments.
+The aim of this task was to navigate a drone towards a destination while avoiding obstacles in a simulation environment.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{background/fyp17-sacfd.png}
+  \caption{Mapless navigation environment for Soft Actor Critic from Demonstrations}
+\label{fig:fyp17-sacfd}
+\end{figure}
+
+The reward used 3 cases as shown in Equation~\ref{eq:fyp17-sacfd-reward}. 
+The final case effectively shows a heuristic was used to increase rewards closer to encourage the agent to rate positions closer to the destination as higher.
+\todo{do this for all of the maths}
+\begin{equation}
+  r(s_{t}, a_{t}) =
+  \begin{cases} 
+    r_{arrive} & |x_{t} - g_{t}| < \delta \\
+    r_{obstacle} & l_{t} < \epsilon \\
+    1-0.1 |x_{t} - g_{t}| & \text{otherwise}
+  \end{cases}
+  \label{eq:fyp17-sacfd-reward}
+\end{equation}
+
+One of the most interesting parts of this particular paper was its effective use of coordinate frames.
+The aim for the agent was to learn to aviod obstacles.
+Rather than being provided with a view on the map or locations of the obstacles, observations were provided around the drone, which effectively gave distances to obstacles in each direction around the drone.
+This effectively measures everything from a drone coordinate frame.
+Within the particular drone perching task, the choice of coordinate frames is more complex, since there are multiple relations between objects that are important to account for.
+There is the drone itself, the perching branch and also the tether.
+In particular since the dynamics between the tether and the drone are complex to model in simulation, this is an area where demonstration could be a very useful application.
+\todo{diagram showing lazer view}
+An interesting observation in this paper is that many reinforcement learning algorithms are trained on a single map.
+One of the major aims here was in generalisation and the understanding of measurements for any map rather than "memorizing" a particular map.
+Therefore in this environment, the positions of the obstacles and destination were randomly assigned in each episode to ensure that generalisation from observations occurred.
+One area of note in this particular example is the trajectories that this algorithm generates are largely not smooth and could prove complex and non-efficient to actually fly in a real environment. \\\\
+
+\todo{improve diagram showing the environment}
+
+
 %     - FYP14 - Learning from Imperfect Demonstrations
 In the area of learning from demonstrations, it is usually assumed that the demonstration data provided is expert behaviour.
 Although there is the possibility of improving from these demonstrations, the improvements are often minor and imperfect demonstrations can have a large performance impact.
@@ -461,17 +515,25 @@ For example, it is unlikely that a demonstration dataset includes a drone crash 
 Although alternative algorithms can understand that demonstration data is generally good, they often have no ability to understand that alternative actions are potentially worse.
 This lack of negative based demonstrations, especially in off-policy learning, can lead to unintended consequences.
 The NAC approach introduced a soft policy gradient that reduced the Q-values of actions not present in demonstrations.
-This differs from the standard soft Q-learning gradient, defined as $ \Delta_{\theta} Q_{\theta}(s, a)(Q_{\theta}(s, a) - \hat{Q}_{\theta}(s, a)) $.
-The normalised version includes an additional term, $\Delta_{\theta} V_Q(s)$, preventing the inflation of Q-values for actions that are unseen:
-\[ (\Delta_{\theta} Q_{\theta}(s, a) - \Delta_{\theta} V_Q(s))(Q_{\theta}(s, a) - \hat{Q}_{\theta}(s, a))\]
+This differs from the standard soft Q-learning gradient, defined in Equation~\ref{eq:fyp14-standard-soft-q-learning}.
 
-\todo{seperate this maths}
+\begin{equation}
+  \Delta_{\theta} Q_{\theta}(s, a)(Q_{\theta}(s, a) - \hat{Q}_{\theta}(s, a))
+  \label{eq:fyp14-standard-soft-q-learning}
+\end{equation}
 
-The full algorithm has been reproduced here in Algorithm.~\ref{alg:nac-imperfect-demos}.
+The normalised version includes an additional term, $\Delta_{\theta} V_Q(s)$, preventing the inflation of Q-values for actions as shown in Equation~\ref{eq:fyp14-normalised-q-version}.
+
+\begin{equation}
+  (\Delta_{\theta} Q_{\theta}(s, a) - \Delta_{\theta} V_Q(s))(Q_{\theta}(s, a) - \hat{Q}_{\theta}(s, a))
+  \label{eq:fyp14-normalised-q-version}
+\end{equation}
+
+The full algorithm has been reproduced here in Algorithm~\ref{alg:nac-imperfect-demos}.
 
 \begin{algorithm}
+\caption{Normalised Actor-Critic for Learning from Demonstration taken from~\cite{fyp14-rl-imperfect-demos}}
 \label{alg:nac-imperfect-demos}
-\caption{Normalised Actor-Critic for Learning from Demonstration~\cite{fyp14-rl-imperfect-demos}}
 \begin{algorithmic}[1] % The number tells where the line numbering should start
 \State Initialize parameters $\theta$ for the rapid Q network, $\theta'$ for the target Q network
 \State Initialize $D$: demonstrations collected by humans or a trained policy network
@@ -505,50 +567,6 @@ NAC's ability to learn beneficial behaviours while avoiding suboptimal ones is e
 NAC is resilient to imperfect demonstrations, this is particularly beneficial in real-world scneraios where providing good demonstrations is difficult.
 It enables the collection of demonstrations, followed by continuous, safe training in real-world conditions. \\\\
 
-
-% FYP17 - Mapless navigation for UAVs via Reinforcement Learning
-\todo{swap around this and the previous one}
-In other areas of Reinforcement Learning variants of the Soft Actor Critic Algorithm have performed well.
-Motivated by the lack of success from DQfD in complex environments, an algorithm, Soft Actor Critic from Demonstrations (SACfD) was proposed~\cite{SACfDMaplessNavigation}.
-This aimed to combine the strong success of SAC algorithms in complex environments.
-The aim of this task was to navigate a drone towards a destination while avoiding obstacles in a simulation environment.
-
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\textwidth]{background/fyp17-sacfd.png}
-  \caption{Mapless navigation environment for Soft Actor Critic from Demonstrations}
-\label{fig:fyp17-sacfd}
-\end{figure}
-
-The reward used 3 cases as shown in Equation.~\ref*{eq:fyp17-sacfd-reward}. 
-The final case effectively shows a heuristic was used to increase rewards closer to encourage the agent to rate positions closer to the destination as higher.
-\todo{do this for all of the maths}
-\begin{equation}
-  r(s_{t}, a_{t}) =
-  \begin{cases} 
-    r_{arrive} & |x_{t} - g_{t}| < \delta \\
-    r_{obstacle} & l_{t} < \epsilon \\
-    1-0.1 |x_{t} - g_{t}| & \text{otherwise}
-  \end{cases}
-  \label{eq:fyp17-sacfd-reward}
-\end{equation}
-
-One of the most interesting parts of this particular paper was its effective use of coordinate frames.
-The aim for the agent was to learn to aviod obstacles.
-Rather than being provided with a view on the map or locations of the obstacles, observations were provided around the drone, which effectively gave distances to obstacles in each direction around the drone.
-This effectively measures everything from a drone coordinate frame.
-Within the particular drone perching task, the choice of coordinate frames is more complex, since there are multiple relations between objects that are important to account for.
-There is the drone itself, the perching branch and also the tether.
-In particular since the dynamics between the tether and the drone are complex to model in simulation, this is an area where demonstration could be a very useful application.
-\todo{diagram showing lazer view}
-An interesting observation in this paper is that many reinforcement learning algorithms are trained on a single map.
-One of the major aims here was in generalisation and the understanding of measurements for any map rather than "memorizing" a particular map.
-Therefore in this environment, the positions of the obstacles and destination were randomly assigned in each episode to ensure that generalisation from observations occurred.
-One area of note in this particular example is the trajectories that this algorithm generates are largely not smooth and could prove complex and non-efficient to actually fly in a real environment.
-
-\todo{improve diagram showing the environment}
-
-
 \section{Transfer Learning}
 %     - FYP10 - Soft Actor-Critic with Inhibitory Networks for Retraining UAV Controllers Faster
 Transfer Learning is a growing field in Reinforcement Learning.
@@ -577,7 +595,7 @@ This not only keeps the knowledge from previous tasks but also ensures a more ef
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{background/fyp-10-sac-inhibitors.png}
-  \caption{Soft Actor Critic with Inhibitory Networks Architecture Design}
+  \caption{Soft Actor Critic with Inhibitory Networks Architecture Design taken from~\cite{fyp10-sac-Inhibitory}}
 \label{fig:fyp17-sacfd}
 \end{figure}
 
@@ -619,7 +637,7 @@ From here a set of skills are extracted from the task-agnostic dataset as shown 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{background/fyp15-skild-architecture.png}
-  \caption{Skill-based Learning with Demonstrations Architecture}
+  \caption{Skill-based Learning with Demonstrations Architecture taken from~\cite{fyp15-demo-guided-rl-with-skills}}
 \label{fig:fyp15-skild}
 \end{figure}
 
@@ -629,7 +647,7 @@ From here the algorithm aims to utilise the skills posterior when closely aligne
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{background/fyp15-maze-diagram.png}
-  \caption{Visualisation of Maze Environment}
+  \caption{Visualisation of Maze Environment taken from~\cite{fyp15-demo-guided-rl-with-skills}}
 \label{fig:fyp15-maze}
 \end{figure}
 
