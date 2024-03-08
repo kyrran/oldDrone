@@ -1,16 +1,16 @@
 from run_tethered_drone_simulator import TetheredDroneSimulatorRunner
-
+from typing import List
 import numpy as np
 
 
-def main(xs, zs):
+def main(xs: List[float], zs: List[float]) -> None:
     simulator = TetheredDroneSimulatorRunner(xs, zs)
     simulator.run()
 
 
 if __name__ == "__main__":
-    data_loaded = np.loadtxt("/Users/tomwoodley/Desktop/TommyWoodleyMEngProject/04_Repository" +
-                             "/Data/PreviousWorkTrajectories/Original/trajectory_data.txt", delimiter=',')
+    data_loaded = np.loadtxt("/Users/tomwoodley/Desktop/TommyWoodleyMEngProject/04_Repository"
+                             + "/Data/PreviousWorkTrajectories/Original/trajectory_data.txt", delimiter=',')
 
     # If you need to separate the loaded data back into cycleX, cycleZ, and finalPosDrone
     xs = data_loaded[:-1, 0]  # All rows except the last, first column
