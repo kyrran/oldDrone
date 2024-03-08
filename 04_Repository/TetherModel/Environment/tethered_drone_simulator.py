@@ -1,19 +1,14 @@
 import pybullet as p
-import time
 
-from drone import Drone
-from tether import Tether
-from weight import Weight
-from environment import Environment
+from TetherModel.Environment.drone import Drone
+from TetherModel.Environment.tether import Tether
+from TetherModel.Environment.weight import Weight
+from TetherModel.Environment.environment import Environment
 
 
 class TetheredDroneSimulator:
-    def __init__(self, xs, zs):
-        self.xs = xs
-        self.zs = zs
-        self.iteration = 0
-
-        self.drone_pos = [xs[0], 0, zs[0] + 3]
+    def __init__(self, drone_pos):
+        self.drone_pos = drone_pos
         self.physicsClient = p.connect(p.GUI)
         p.setPhysicsEngineParameter(numSolverIterations=500)
         p.setGravity(0, 0, -10)
@@ -27,27 +22,29 @@ class TetheredDroneSimulator:
         self.environment = Environment()
         self.environment.add_tree_branch([0, 0, 2.7])
 
-    def step_simulation(self):
+    def step(self, action=None):
+        # Update drone position
+        if action is not None:
+            self.drone_pos = [self.drone_pos[0] + action[0],
+                              self.drone_pos[1] + action[1],
+                              self.drone_pos[2] + action[2]]
+            self.drone.set_position(self.drone_pos)
+        self.weight.apply_drag()
         # Step the physics simulation
         p.stepSimulation()
 
-    def run(self):
-        time.sleep(5)
-        already_moved = False
-        while True:
-            it = min(self.iteration, (len(self.xs) - 1))
-            x = self.xs[it]
-            z = self.zs[it] + 3
-            position = [x, 0, z]
-            self.iteration += 500
-            if self.iteration < len(self.xs) * 2:
-                self.drone.set_position(position)
-            elif not already_moved:
-                self.drone.set_position([x - 0.2, 0, z])
-                already_moved = True
+    def reset(self, pos):
+        p.resetSimulation()
+        self.drone_pos = pos
+        self.drone = Drone(pos)
+        tether_top_position = self.drone.get_world_centre_bottom()
+        self.tether = Tether(length=1.0, top_position=tether_top_position, physics_client=self.physicsClient)
+        self.tether.attach_to_drone(drone=self.drone)
+        tether_bottom_position = self.tether.get_world_centre_bottom()
+        self.weight = Weight(top_position=tether_bottom_position)
+        self.tether.attach_weight(weight=self.weight)
+        self.environment = Environment()
+        self.environment.add_tree_branch([0, 0, 2.7])
 
-            self.weight.apply_drag()
-            # self.tether.cancel_gravity()
-            self.step_simulation()
-            time.sleep(1./240.)
-            print("x: ", x, " z: ", z)
+    def close(self):
+        p.disconnect(self.physicsClient)
