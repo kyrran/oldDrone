@@ -1,5 +1,5 @@
 import pybullet as p
-from typing import List
+import numpy as np
 
 
 class Drone:
@@ -8,8 +8,9 @@ class Drone:
     LENGTH: float = 0.1
     HEIGHT: float = 0.05
     MASS: float = 1.0
+    _body_centre_bottom = np.array([0, 0, - HEIGHT], dtype=np.float32)
 
-    def __init__(self, start_pos: List[float]) -> None:
+    def __init__(self, start_pos: np.ndarray) -> None:
         self.startPos = start_pos
         self.startOrientation = p.getQuaternionFromEuler([0, 0, 0])
         self.halfExtents = [self.WIDTH, self.LENGTH, self.HEIGHT]  # half width, length, and height of the drone box
@@ -32,7 +33,7 @@ class Drone:
             angularVelocity=[0, 0, 0]
         )
 
-    def apply_controls(self, upward_force: List[float]) -> None:
+    def apply_controls(self, upward_force: float) -> None:
         upward_force = [0, 0, upward_force]
 
         # Apply the given force upwards to the drone - world coordinate frame
@@ -43,17 +44,17 @@ class Drone:
                              posObj=[0, 0, 0],
                              flags=p.LINK_FRAME)
 
-    def get_world_centre_bottom(self) -> List[float]:
+    def get_world_centre_bottom(self) -> np.ndarray:
         # current position of the drone
         position, orientation = p.getBasePositionAndOrientation(self.model)
 
         # bottom centre of the drone is the centre along com minus the half height
-        return [position[0], position[1], position[2] - self.HEIGHT]
+        return np.array([position[0], position[1], position[2] - self.HEIGHT], dtype=np.float32)
 
-    def get_body_centre_bottom(self) -> List[float]:
-        return [0, 0, - self.HEIGHT]
+    def get_body_centre_bottom(self) -> np.ndarray:
+        return self._body_centre_bottom
 
-    def set_position(self, position: List[float]) -> None:
+    def set_position(self, position: np.ndarray) -> None:
         # No change in orientation, so retrieve the current orientation
         _, current_orientation = p.getBasePositionAndOrientation(self.model)
 

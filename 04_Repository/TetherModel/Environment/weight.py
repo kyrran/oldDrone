@@ -1,5 +1,6 @@
 import pybullet as p
 from typing import List
+import numpy as np
 
 
 class Weight:
@@ -7,7 +8,11 @@ class Weight:
     RADIUS: float = 0.05
     DRAG_COEF: float = 0.472
 
-    def __init__(self, top_position: List[float]) -> None:
+    _body_centre_top = np.array([0, 0, RADIUS], dtype=np.float32)
+
+    def __init__(self, top_position: np.ndarray) -> None:
+        assert isinstance(top_position, np.ndarray), "top_position must be an instance of np.ndarray"
+
         top_x, top_y, top_z = top_position
         self.base_position = [top_x, top_y, top_z - self.RADIUS]
         self.create_weight()
@@ -23,12 +28,12 @@ class Weight:
                                            basePosition=self.base_position,
                                            baseOrientation=[0, 0, 0, 1])
 
-    def get_position(self) -> None:
+    def get_position(self) -> List[float]:
         position, _ = p.getBasePositionAndOrientation(self.weight_id)
         return position
 
-    def get_body_centre_top(self) -> None:
-        return [0, 0, self.RADIUS]
+    def get_body_centre_top(self) -> np.ndarray:
+        return self._body_centre_top
 
     def apply_drag(self, fluid_density: float = 1.225) -> None:
         velocity, _ = p.getBaseVelocity(self.weight_id)
