@@ -8,22 +8,26 @@ from TetherModel.Environment.tethered_drone_simulator import TetheredDroneSimula
 
 class BulletDroneEnv(gym.Env):
     """
-    Custom Environment that follows gym interface.
-    This is a simple env where the agent must learn to go always left.
+    Custom PyBullet Drone Environment that follows gym interface.
+    Render Modes
+      - Console: Uses PyBullet Direct - supports multiple environments in parallel.
+      - Human: Uses PyBullet GUI - note that this has limitations - GUI console cannot be quit
+        additionally only environment can be built at a time.
     """
 
-    metadata = {"render_modes": ["console"]}
+    metadata = {"render_modes": ["console", "human"]}
     reset_pos = np.array([2, 0, 3], dtype=np.float32)
     goal_state = np.array([0.0, 0.0, 3.0])  # Goal state
 
-    def __init__(self, render_mode: str = "console") -> None:
+    def __init__(self, render_mode: str = "human") -> None:
         super(BulletDroneEnv, self).__init__()
-        self.simulator = TetheredDroneSimulator(drone_pos=self.reset_pos)
+        self.simulator = TetheredDroneSimulator(drone_pos=self.reset_pos, gui_mode=(render_mode == "human"))
         self.action_space = spaces.Box(low=np.array([-0.001, -0.001, -0.001]),
                                        high=np.array([0.001, 0.001, 0.001]), dtype=np.float32)
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32)
         self.render_mode = render_mode
         self.num_steps = 0
+        self.should_render = True
 
     def reset(self, seed: int = None, options: Dict[str, Any] = None) -> Tuple[np.ndarray, Dict[Any, Any]]:
         super().reset(seed=seed, options=options)
@@ -33,6 +37,7 @@ class BulletDroneEnv(gym.Env):
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[Any, Any]]:
         self.simulator.step(action)
+        self.render()
         state = self.simulator.drone_pos
 
         self.num_steps += 1
@@ -43,6 +48,10 @@ class BulletDroneEnv(gym.Env):
         return state, reward, terminated, truncated, info
 
     def render(self) -> None:
+        if self.should_render:
+            self._render()
+
+    def _render(self) -> None:
         # agent is represented as a cross, rest as a dot
         if self.render_mode == "console":
             print(f'Agent position: {self.simulator.drone_pos}')
@@ -54,4 +63,4 @@ class BulletDroneEnv(gym.Env):
     def reward_fun(self, state: np.ndarray) -> Tuple[float, bool, bool]:
         # Implement how reward is calculated based on the state
         distance = np.linalg.norm(state - self.goal_state)
-        return - distance, bool(distance < 0.1), bool(self.num_steps > 1000)
+        return - distance, bool(distance < 0.1), False
