@@ -4,6 +4,7 @@ from gymnasium import spaces
 from typing import Dict, Any, Tuple
 
 from TetherModel.Environment.tethered_drone_simulator import TetheredDroneSimulator
+from Gym.Rewards.Approaching import CircularApproachingReward
 
 
 class BulletDroneEnv(gym.Env):
@@ -17,7 +18,7 @@ class BulletDroneEnv(gym.Env):
 
     metadata = {"render_modes": ["console", "human"]}
     reset_pos = [2, 0, 3]
-    goal_state = np.array([0.0, 0.0, 3.0])  # Goal state
+    centre_pos = np.array([0.0, 0.0, 3.0])  # Goal state
     reset_pos_distance = 2.0
 
     def __init__(self, render_mode: str = "human") -> None:
@@ -30,6 +31,7 @@ class BulletDroneEnv(gym.Env):
         self.render_mode = render_mode
         self.num_steps = 0
         self.should_render = True
+        self.reward = CircularApproachingReward()
 
     def reset(self, seed: int = None, options: Dict[str, Any] = None,
               degrees: int = None) -> Tuple[np.ndarray, Dict[Any, Any]]:
@@ -43,13 +45,14 @@ class BulletDroneEnv(gym.Env):
         return reset_pos, {}
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[Any, Any]]:
-        self.simulator.step(action)
+        has_collided, dist_tether_branch, dist_drone_branch = self.simulator.step(action)
         self.render()
         state = self.simulator.drone_pos
 
         self.num_steps += 1
 
-        reward, terminated, truncated = self.reward_fun(state)
+        reward, terminated, truncated = self.reward.reward_fun(state, has_collided, dist_tether_branch,
+                                                               dist_drone_branch)
         info = {"distance_to_goal": -reward}
 
         return state, reward, terminated, truncated, info
@@ -66,11 +69,6 @@ class BulletDroneEnv(gym.Env):
     def close(self) -> None:
         if hasattr(self, 'simulator'):
             self.simulator.close()
-
-    def reward_fun(self, state: np.ndarray) -> Tuple[float, bool, bool]:
-        # Implement how reward is calculated based on the state
-        distance = np.linalg.norm(state - self.goal_state)
-        return - distance, bool(distance < 0.5), False
 
     def _generate_reset_position(self, seed):
         """
@@ -90,5 +88,16 @@ class BulletDroneEnv(gym.Env):
         x_offset = self.reset_pos_distance * np.cos(radians)
         y_offset = self.reset_pos_distance * np.sin(radians)
 
-        reset_pos = self.goal_state + np.array([x_offset, 0, y_offset], dtype=np.float32)
+        reset_pos = self.centre_pos + np.array([x_offset, 0, y_offset], dtype=np.float32)
         return reset_pos.astype(np.float32)
+
+    # Visualisation funtion
+    def calc_reward(self, state):
+        branch_pos = np.array([0.0, 0.0, 2.7])  # Branch position
+        tether_pos = state - np.array([0, 0, 0.5])
+        dist_tether_branch = np.linalg.norm(tether_pos - branch_pos)
+        dist_drone_branch = np.linalg.norm(state - branch_pos)
+        has_collided = bool(dist_tether_branch < 0.1)
+
+        reward, _, _ = self.reward.reward_fun(state, has_collided, dist_tether_branch, dist_drone_branch)
+        return reward

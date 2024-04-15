@@ -48,12 +48,14 @@ def sample_trajectories(dir):
             action, _ = model.predict(obs, deterministic=True)
             obs, _, done, _ = model.env.step(action)
             if done:
+                trajectory.append(trajectory[-1] + 0.5 * action[0])
+                print("Done")
                 break
             trajectory.append(obs[0])
         trajectory_states.append(trajectory)
     env.close()
 
-    plot_trajectories(trajectory_states)
+    plot_trajectories(trajectory_states, output_filename=f"{dir}/sample_trajectories.png")
 
 
 if __name__ == "__main__":
