@@ -1,4 +1,3 @@
-from Gym.Algorithms.sacfd import SACfD
 from Gym.bullet_drone_env import BulletDroneEnv
 from Gym.Wrappers.two_dim_wrapper import TwoDimWrapper
 from Gym.Wrappers.position_wrapper import PositionWrapper
@@ -38,21 +37,8 @@ def main(algorithm, num_steps, filename):
         print_green("Model Saved")
     env.close()
 
-    {
-        "state": [
-            2.2702350087543315,
-            3.058575988926993
-        ],
-        "action": [
-            -0.24440059558633465,
-            0.05260709407333408
-        ],
-        "reward": -2.270990563928559,
-        "next_state": [
-            2.025834413167997,
-            3.111183083000327
-        ]
-    },
+    generate_graphs(directory=f"models/{dir_name}")
+
 
 def train_sac(env, num_steps):
     model = SAC(
@@ -65,6 +51,7 @@ def train_sac(env, num_steps):
     ).learn(num_steps, log_interval=10, progress_bar=True)
 
     return model
+
 
 def train_sacfd(env, num_steps):
     model = SAC(
@@ -82,7 +69,6 @@ def train_sacfd(env, num_steps):
     new_logger = configure(tmp_path, ["stdout", "csv", "tensorboard"])
     model.set_logger(new_logger)
 
-    
     data = get_buffer_data(env)
     model.learning_rate = 0.003
     print("Buffer Size: ", model.replay_buffer.size())
@@ -97,9 +83,11 @@ def train_sacfd(env, num_steps):
 
     return model
 
+
 def get_buffer_data(env):
     dir = "Data/PreviousWorkTrajectories/rl_demos"
     return load_all_data(env, dir)
+
 
 def load_all_data(env, directory):
     pattern = f"{directory}/rl_demo_approaching_angle_*.json"
@@ -111,6 +99,25 @@ def load_all_data(env, directory):
         all_data.extend(transformed_data)
     return all_data
 
+
+def generate_graphs(directory):
+    from models.generate_reward_graph_from_logs import read_csv_file
+    from models.visualise_reward import plot_reward_visualisation
+    from models.sample_trajectories_from_model import sample_trajectories
+
+    # visualise reward function used
+    print_green("Generating Reward Visualisation")
+    plot_reward_visualisation(directory, show=False)
+
+    # visualise training rewards
+    print_green("Generating Reward Logs")
+    read_csv_file(f"{directory}/logs.monitor.csv", show=False)
+
+    # visualise sample trajectories
+    print_green("Generating Sample Trajectories")
+    sample_trajectories(directory, show=False)
+
+
 def get_dir_name(prefix):
     # Get the current date and time
     current_datetime = datetime.datetime.now()
@@ -119,11 +126,13 @@ def get_dir_name(prefix):
 
     return dir_name
 
+
 # Load the JSON data from a file
 def load_json(file_path):
     with open(file_path, 'r') as file:
         data = json.load(file)
     return data
+
 
 def convert_data(env, json_data):
     dataset = []
@@ -132,7 +141,7 @@ def convert_data(env, json_data):
         _next_obs = item['next_state']
         x, z = _next_obs
         next_obs = np.array(_next_obs)
-        
+
         action = np.array(item['action'])
         reward = np.array(env.unwrapped.calc_reward([x, 0, z]))
         done = np.array([False])
@@ -140,11 +149,14 @@ def convert_data(env, json_data):
         dataset.append((obs, next_obs, action, reward, done, info))
     return dataset
 
+
 def print_red(text):
     print(f"\033[31m{text}\033[0m")
 
+
 def print_green(text):
     print(f"\033[32m{text}\033[0m")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process input parameters.")
