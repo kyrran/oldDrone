@@ -21,7 +21,7 @@ class TetheredDroneSimulator:
         p.setGravity(0, 0, -10)
         self.drone = Drone(self.drone_pos)
         tether_top_position = self.drone.get_world_centre_bottom()
-        self.tether = Tether(length=1.0, top_position=tether_top_position, physics_client=self.physicsClient)
+        self.tether = Tether(length=1.5, top_position=tether_top_position, physics_client=self.physicsClient)
         self.tether.attach_to_drone(drone=self.drone)
         tether_bottom_position = self.tether.get_world_centre_bottom()
         self.weight = Weight(top_position=tether_bottom_position)
@@ -45,7 +45,10 @@ class TetheredDroneSimulator:
         dist_drone_branch = self._distance(self.drone.get_world_centre_centre(),
                                            self.environment.get_tree_branch_midpoint())
         p.stepSimulation()
-        return has_collided, dist_tether_branch, dist_drone_branch
+        # Don't count rotations if we're not in contact with the branch
+        num_rotations = self.tether.compute_total_rotation() if has_collided else 0.0
+
+        return has_collided, dist_tether_branch, dist_drone_branch, num_rotations
 
     def check_collisions(self):
         for part_id in self.tether.get_segments():

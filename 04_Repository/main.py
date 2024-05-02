@@ -1,6 +1,7 @@
 from Gym.bullet_drone_env import BulletDroneEnv
 from Gym.Wrappers.two_dim_wrapper import TwoDimWrapper
 from Gym.Wrappers.position_wrapper import PositionWrapper
+from Gym.Algorithms.sacfd import SACfD
 from stable_baselines3 import SAC
 from stable_baselines3.common.monitor import Monitor
 import argparse
@@ -11,9 +12,11 @@ import json
 import glob
 
 
-def main(algorithm, num_steps, filename):
+def main(algorithm, num_steps, filename, render_mode):
     print_green(f"Algorithm: {algorithm}")
     print_green(f"Number of Steps: {num_steps}")
+    print_green(f"Render Mode: {render_mode}")
+
     save_data = filename is not None
     if save_data:
         dir_name = get_dir_name(filename)
@@ -22,7 +25,7 @@ def main(algorithm, num_steps, filename):
     else:
         print_red("WARNING: No output or logs will be generated, the model will not be saved!")
 
-    env = PositionWrapper(TwoDimWrapper(BulletDroneEnv(render_mode="console")))
+    env = PositionWrapper(TwoDimWrapper(BulletDroneEnv(render_mode=render_mode)))
     if save_data:
         env = Monitor(env, f"models/{dir_name}/logs")
     if algorithm == "SAC":
@@ -54,7 +57,9 @@ def train_sac(env, num_steps):
 
 
 def train_sacfd(env, num_steps):
-    model = SAC(
+    from utils.graphics.plot_actor_policy import visualize_policy
+
+    model = SACfD(
         "MlpPolicy",
         env,
         verbose=1,
@@ -70,15 +75,16 @@ def train_sacfd(env, num_steps):
     model.set_logger(new_logger)
 
     data = get_buffer_data(env)
-    model.learning_rate = 0.003
     print("Buffer Size: ", model.replay_buffer.size())
 
     for obs, next_obs, action, reward, done, info in data:
         model.replay_buffer.add(obs, next_obs, action, reward, done, info)
     print("Buffer Size: ", model.replay_buffer.size())
-    model.train(5000, 32)
-    model.learning_rate = 0.0003
+
+    model.train_actor()
+    visualize_policy(model, data, action_scale=1.0)
     print_green("Pretraining Complete!")
+
     model.learn(num_steps, log_interval=10, progress_bar=True)
 
     return model
@@ -96,8 +102,29 @@ def load_all_data(env, directory):
     for file in files:
         json_data = load_json(file)
         transformed_data = convert_data(env, json_data)
+        # show_in_env(env, transformed_data)
         all_data.extend(transformed_data)
     return all_data
+
+
+# Shows the demonstration data in the enviornment - useful for verification purposes
+# TODO: Add a setting to enable this
+def show_in_env(env, transformed_data):
+    start, _, _, _, _, _ = transformed_data[0]
+    x, z = start
+
+    state = env.reset(position=np.array([x, 0.0, z]))
+    done = False
+
+    # Run through each action in the provided list
+    for _, _, action, _, _, _ in transformed_data:
+        state, reward, done, _, _ = env.step(action)
+
+        if done:
+            print("Episode finished")
+            break
+
+    print(state)
 
 
 def generate_graphs(directory):
@@ -142,11 +169,15 @@ def convert_data(env, json_data):
         x, z = _next_obs
         next_obs = np.array(_next_obs)
 
-        action = np.array(item['action'])
-        reward = np.array(env.unwrapped.calc_reward([x, 0, z]))
+        # Normalised action TODO: Define this relative to the env so it's consistent
+        action = np.array(item['action']) * 2.0
+        reward = np.array(env.unwrapped.calc_reward([x, 0, z])) + 10  # TODO: Does this help or hurt?
         done = np.array([False])
         info = [{}]
         dataset.append((obs, next_obs, action, reward, done, info))
+    for _ in range(1):  # Adds an extra action on the end which helps with wrapping.
+        dataset.append((next_obs, next_obs, np.array([0.0, 0.0]), reward, done, info))
+    dataset.append((next_obs, next_obs, np.array([0.0, 0.0]), reward, np.array([True]), info))
     return dataset
 
 
@@ -167,6 +198,8 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--filename", type=str,
                         default=None,
                         help="Optional: Specify the file name. Defaults to 'simple_YYYYMMDD_HHMM.py'")
+    parser.add_argument("-v", "--visualise", action="store_true",
+                        help="Optional: Visualise the training - This is significantly slower.")
 
     args = parser.parse_args()
-    main(args.algorithm, args.num_steps, args.filename)
+    main(args.algorithm, args.num_steps, args.filename, "console" if not args.visualise else "human")
