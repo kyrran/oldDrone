@@ -39,17 +39,37 @@ def transform_demo(angle):
     print(f"Angle: {angle} is {mult}")
 
     state_action_reward = []
+    memory = []
     for i in range(len(waypoints) - 1):
         x, y = waypoints[i]
         current_state = (x * mult, y)
+
+        if i == 0:
+            memory = [current_state] * 3  
+
+        memory.append(current_state)
+        if len(memory) > 3:
+            memory.pop(0)
+        
+        augmented_current_state = tuple(item for state in memory for item in state)
+
         x, y = waypoints[i + 1]
         next_state = (x * mult, y)
+
+        # Add next state to the memory to calculate augmented next state
+        memory.append(next_state)
+        if len(memory) > 3:
+            augmented_next_state = tuple(item for state in memory[-3:] for item in state)
+        else:
+            augmented_next_state = tuple(item for state in memory for item in state)
+        memory.pop()  # Remove the next state from memory after using it for augmentation
+
 
         # Calculate action as difference between next and current state
         action = (next_state[0] - current_state[0], next_state[1] - current_state[1])
 
         reward = calc_reward(current_state)
-        state_action_reward.append((current_state, action, reward, next_state))
+        state_action_reward.append((augmented_current_state, action, reward, augmented_next_state))
 
     # Print the state, action, reward list
     print("STATE,ACTION,REWARDS: ")
@@ -74,6 +94,6 @@ def transform_demo(angle):
 
     print(f"Data saved to rl_demo_approaching_angle_{angle}.json")
 
-angles = ["0.0", "22.5", "45.0", "67.5", "90.0", "112.5", "135.0", "157.5", "180.0", "202.5", "225.0", "247.5", "270.0", "292.5", "315.0", "337.5", "360.0"]
+angles = ["0.0", "22.5", "45.0", "67.5", "90.0", "112.5", "135.0", "157.5", "180.0", "202.5", "225.0", "247.5", "292.5", "315.0", "337.5", "360.0"]
 for angle in angles:
     transform_demo(angle)
