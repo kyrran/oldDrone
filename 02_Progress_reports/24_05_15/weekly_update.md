@@ -3,6 +3,7 @@ marp: true
 theme: custom-dracula
 paginate: true
 _paginate: false # or use `_paginate: skip`
+math: mathjax
 ---
 
 # Agile Trajectory Generation for Tensile Perching with Aerial Robots
@@ -17,8 +18,9 @@ _paginate: false # or use `_paginate: skip`
 - Issue around wrapping from different sides.
   - Starting position in state space
   - Previous n states
-  - Discussion with Hann
+  - Discussion last time.
     - Take advantage of the symmetry in the environment.
+    - More mathematical information on the Reward Function.
 
 ---
 # Symmetry
@@ -31,13 +33,43 @@ Symmetrical Wrapper
 
 ---
 ### Symmetry Diagram
-TODO
+![h:500](./symmetricWrapperDesign.jpeg)
 
+<!-- ---
+### Symmetric Tragectories -->
+---
+# Reward Function
+Reward is currently calculated in levels: 
+- Approaching: $r_1 = - dist(x_{state}; a_{target})$
+
+- Wrapping: $r_2 = num\_wraps(x)$
+
+- Hanging: $r_3 = max(1 \text{ if } within(x_{state}; h_{box} \text{ else } 0), - dist(x_{state}; h_{target})  )$
+
+- Overall:
+
+  - If num_wraps > 1:
+    - $r = scale(r_3; -1, 0)$
+
+  - Otherwise:
+    - $r = scale(r_2 + r_1; -3, 0)$ otherwise
+
+---
+# Further Mathematics
+- Distance: $dist(x, target) =  norm_{L2}(x, target)$
+- Number of Wraps: Algorithm on next slide - based around the position of the two ends of the tether - tracking through different timesteps to calculate rotation.
+- Scale: $scale(x; min_x, max_x, a, b) = ((x - min_x) / (max_x - min_x) \text{ x } (b - a))$
+
+---
+# Num Wraps
+![h:500](./num_wraps_algorithm.png)
+
+# Hanging Reward
 ---
 # Stages
 
 Approaching
-- Speed - visually much shorter and faster trajectories - need to gather some adiditonal data on this for evaluation purposes.
+- Speed - visually much shorter and faster trajectories - need to gather some additional data on this for evaluation purposes.
 
 Wrapping
 - Waiting
@@ -54,29 +86,37 @@ Hanging
 Sample Approaching Trajectories
 
 ---
-# Thesis Plan
-- Intro
-- Background
-- Environmental Modelling
-  - Initial Environment
-  - Wrappers
-    - Dimensions
-    - Symmetry
-    -
-- Training
+# Report Plan
+- Intro - Background
+- Methodology
+  - Environmental Modelling
+    - Initial Environment
+      - Pybullet Environment
+      - Tether Modelling
+    - Wrappers
+      - Dimension
+      - Symmetry
+      - Memory
+      - Timestep
+  - Training
+    - Reward Function Design
+    - Algorithms
+    - Demonstrations
+---
+- Results
+  - Trajectory Experiments
+  - Speed
+- Conclusion
 
 ---
 # Overall Plan
+- Report Deadline 17th June
+  - Week 13th - 20th May --------- Finish Wrapping
+  - Week 20th - 27th May --------- Demontration Integration & Experiments
+  - Week 27th May - 3rd June  ----- Evaluation, Experiments, Report
+  - Week 3rd - 10th June ---------- Evaluation, Experiments, Report
+  - Week 10th - 17th June -------- Report
 
 
 ---
 ![h:570](./sample_trajectories.png)
-
-
----
-# Next Steps
-- Augment State Space with "directional" knowlege
-  - Starting position in state space
-  - Previous n states
-
-- Hanging Phase
