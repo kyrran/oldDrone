@@ -64,7 +64,9 @@ Reward is currently calculated in levels:
 # Num Wraps
 ![h:500](./num_wraps_algorithm.png)
 
-# Hanging Reward
+# Hanging Reward Visual
+![h:500](./reward_visualisation.png)
+
 ---
 # Stages
 
@@ -116,7 +118,3 @@ Sample Approaching Trajectories
   - Week 27th May - 3rd June  ----- Evaluation, Experiments, Report
   - Week 3rd - 10th June ---------- Evaluation, Experiments, Report
   - Week 10th - 17th June -------- Report
-
-
----
-![h:570](./sample_trajectories.png)
