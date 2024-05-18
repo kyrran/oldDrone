@@ -9,7 +9,7 @@ def make_dir(prefix):
     if prefix is None:
         return None
     dir_name = get_dir_name(prefix)
-    os.mkdir(f"=/models/{dir_name}")
+    os.mkdir(f"models/{dir_name}")
     return dir_name
 
 

@@ -14,6 +14,7 @@ from utils.args_parsing import StoreDict
 import argparse
 import numpy as np
 import glob
+import os
 
 DEMO_PATH = "/Users/tomwoodley/Desktop/TommyWoodleyMEngProject/04_Repository/Data/PreviousWorkTrajectories/rl_demos"
 DEFAULT_CHECKPOINT = 5000
@@ -130,7 +131,7 @@ def get_checkpointer(should_save, dir_name, checkpoint):
     if should_save and checkpoint is not None:
         checkpoint_callback = CheckpointCallback(
             save_freq=checkpoint,
-            save_path=f"/models/{dir_name}/training_logs/",
+            save_path=f"models/{dir_name}/training_logs/",
             name_prefix="checkpoint",
             save_replay_buffer=False,
             save_vecnormalize=True)
@@ -143,7 +144,7 @@ def get_env(dir_name, render_mode):
         SymmetricWrapper(BulletDroneEnv(render_mode=render_mode))))))
 
     if dir_name is not None:
-        env = CustomMonitor(env, f"/models/{dir_name}/logs")
+        env = CustomMonitor(env, f"models/{dir_name}/logs")
 
     return env
 
@@ -185,6 +186,29 @@ def get_agent(algorithm, env, demo_path, show_demos_in_env, hyperparams):
     return agent
 
 
+def get_existing_agent(existing_agent_path, env):
+    try:
+        # Check if the file path ends with .zip
+        if not existing_agent_path.endswith('.zip'):
+            raise ValueError("The file path must end with .zip")
+
+        # Load the SAC model directly from the zip file
+        model = SACfD.load(existing_agent_path)
+        model.set_env(env)
+
+        # Check for the replay buffer file in the same directory
+        replay_buffer_path = os.path.join(os.path.dirname(existing_agent_path), 'replay_buffer.pkl')
+        if os.path.exists(replay_buffer_path):
+            print("A replay buffer is being loaded.")
+            model.load_replay_buffer(replay_buffer_path)
+
+        print(f"Buffer Size: {model.replay_buffer.size()}")
+        return model
+    except Exception as e:
+        print(f"ERROR: {str(e)}")
+        exit(1)
+
+
 def pre_train(agent, env, demo_path, show_demos_in_env):
     from stable_baselines3.common.logger import configure
     tmp_path = "/tmp/sb3_log/"
@@ -204,26 +228,33 @@ def pre_train(agent, env, demo_path, show_demos_in_env):
 # ----------------------------------- MAIN ------------------------------------
 
 
-def main(algorithm, timesteps, filename, render_mode, demo_path, should_show_demo, checkpoint, hyperparams):
+def main(algorithm, timesteps, filename, render_mode, demo_path, should_show_demo, checkpoint, hyperparams,
+         existing_agent, save_replay_buffer):
+
     save_data = filename is not None
     dir_name = make_dir(filename)
 
     env = get_env(dir_name, render_mode)
     checkpoint_callback = get_checkpointer(save_data, dir_name, checkpoint)
 
-    agent = get_agent(algorithm, env, demo_path, should_show_demo, hyperparams)
+    if existing_agent is None:
+        agent = get_agent(algorithm, env, demo_path, should_show_demo, hyperparams)
+    else:
+        agent = get_existing_agent(existing_agent, env)
 
     agent.learn(timesteps, log_interval=10, progress_bar=True, callback=checkpoint_callback)
 
     print_green("TRAINING COMPLETE!")
 
     if save_data:
-        agent.save(f"/models/{dir_name}/model")
+        agent.save(f"models/{dir_name}/model")
+        if save_replay_buffer:
+            agent.save_replay_buffer(f"models/{dir_name}/replay_buffer")
         print_green("Model Saved")
     env.close()
 
     if save_data:
-        generate_graphs(directory=f"/models/{dir_name}")
+        generate_graphs(directory=f"models/{dir_name}")
 
 
 def parse_arguments():
@@ -239,6 +270,7 @@ def parse_arguments():
 
     # Output filename for logs
     parser.add_argument('-o', '--output-filename', type=str, default=None, help='Filename for storing logs')
+    parser.add_argument('--save-replay-buffer', action='store_true', help='Saves the replay model from the buffer.')
 
     # Graphical user interface
     parser.add_argument('-gui', '--gui', action='store_true', help='Enable graphical user interface')
@@ -258,6 +290,10 @@ def parse_arguments():
     parser.add_argument("-params", "--hyperparams", type=str, nargs="+", action=StoreDict,
                         help="Overwrite hyperparameter (e.g. lr:0.01 batch_size:10)",)
 
+    # Continue Training
+    parser.add_argument("-i", "--trained-agent", help="Path to a pretrained agent to continue training",
+                        default=None, type=str, required=False)
+
     return parser.parse_args()
 
 
@@ -272,6 +308,8 @@ if __name__ == "__main__":
     checkpoint = args.checkpoint_episodes
     if args.no_checkpoint:
         checkpoint = None
+    trained_agent = args.trained_agent
+    save_replay_buffer = args.save_replay_buffer
 
     if algorithm != "SACfD" and demo_path is not None:
         print_red("WARNING: Demo path provided will NOT be used by this algorithm!")
@@ -288,6 +326,9 @@ if __name__ == "__main__":
         print_green(f"Demo Path: {demo_path}")
     print_green(f"Checkpointing: {checkpoint}")
 
+    if trained_agent is not None:
+        print_green(f"Using pre-trained agent: {trained_agent}")
+
     accpetable_hp = ["lr", "batch_size"]
     hyperparams = args.hyperparams if args.hyperparams is not None else dict()
     for key, val in hyperparams.items():
@@ -296,4 +337,5 @@ if __name__ == "__main__":
         else:
             print_red(f"\nUnknown Hyperparameter: {key}")
 
-    main(algorithm, timesteps, filename, render_mode, demo_path, should_show_demo, checkpoint, hyperparams)
+    main(algorithm, timesteps, filename, render_mode, demo_path, should_show_demo, checkpoint, hyperparams,
+         trained_agent, save_replay_buffer)
