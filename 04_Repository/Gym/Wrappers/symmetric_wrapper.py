@@ -1,5 +1,4 @@
 import gymnasium as gym
-from gymnasium import spaces
 from typing import Dict, Any, Tuple
 import numpy as np
 
@@ -15,8 +14,8 @@ class SymmetricWrapper(gym.Wrapper):
         super().__init__(env)
 
         # Position Based Action Space
-        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=self.MIN, high=self.MAX, shape=(2,), dtype=np.float32)
+        self.action_space = env.action_space
+        self.observation_space = env.observation_space
         self.positive = True
 
     def step(self, action: np.ndarray) -> Tuple[np.ndarray, float, bool, bool, Dict[Any, Any]]:
@@ -34,15 +33,15 @@ class SymmetricWrapper(gym.Wrapper):
         if self.positive:
             new_state = state
         else:
-            x, y, z = state
-            new_state = (-1 * x, y, z)
+            x, y, z, t = state
+            new_state = (-1 * x, y, z, t)
 
         return new_state, reward, terminated, truncated, info
 
     def reset(self, seed: int = None, options: Dict[Any, Any] = None,
               degrees: int = None, position=None) -> Tuple[np.ndarray, Dict[Any, Any]]:
         state, info = self.env.reset(seed, options, degrees, position)
-        x, y, z = state
+        x, y, z, t = state  # Do we need this line?
         if x >= 0:
             self.positive = True
         else:
@@ -53,6 +52,6 @@ class SymmetricWrapper(gym.Wrapper):
         if self.positive:
             new_state = state
         else:
-            x, y, z = state
-            new_state = (-1 * x, y, z)
+            x, y, z, t = state
+            new_state = (-1 * x, y, z, t)
         return new_state, info
