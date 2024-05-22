@@ -2,7 +2,6 @@ from Gym.bullet_drone_env import BulletDroneEnv
 from Gym.Wrappers.two_dim_wrapper import TwoDimWrapper
 from Gym.Wrappers.position_wrapper import PositionWrapper
 from Gym.Wrappers.symmetric_wrapper import SymmetricWrapper
-from Gym.Wrappers.memory_wrapper import MemoryWrapper
 from Gym.Wrappers.hovering_wrapper import HoveringWrapper
 from Gym.Algorithms.sacfd import SACfD
 from stable_baselines3 import SAC
@@ -17,13 +16,13 @@ import numpy as np
 import glob
 import os
 
-DEMO_PATH = "/Users/tomwoodley/Desktop/TommyWoodleyMEngProject/04_Repository/Data/PreviousWorkTrajectories/rl_demos"
+DEMO_PATH = "/Users/tomwoodley/Desktop/TommyWoodleyMEngProject/src/Data/PreviousWorkTrajectories/rl_demos"
 DEFAULT_CHECKPOINT = 5000
 
 # ---------------------------------- RL UTIL ----------------------------------
 
 
-def generate_graphs(directory):
+def generate_graphs(directory, phase="all"):
     from models.generate_reward_graph_from_logs import read_csv_file
     from models.visualise_reward import plot_reward_visualisation
     from models.sample_trajectories_from_model import sample_trajectories
@@ -38,13 +37,13 @@ def generate_graphs(directory):
 
     # visualise sample trajectories
     print_green("Generating Sample Trajectories")
-    sample_trajectories(directory, show=False)
+    sample_trajectories(directory, show=False, phase=phase)
 
 
 # Shows the demonstration data in the enviornment - useful for verification purpose
 def show_in_env(env, transformed_data):
     start, _, _, _, _, _ = transformed_data[0]
-    x, z = start
+    x, z, _, _, _, _, _, _, _, _ = start
 
     state = env.reset(position=np.array([x, 0.0, z]))
     done = False
@@ -88,10 +87,11 @@ def convert_data(env, json_data):
     dataset = []
     num = 0
     for item in json_data:
-        obs = np.append(np.array(item['state']), num / 100.0)
+        _, _, _, _, _, _, x, z, t = item['state']
+        obs = np.append(np.array([x, z, t]), num / 100.0)
         _next_obs = item['next_state']
-        _, _, _, _, _, _, x, z, _ = _next_obs
-        next_obs = np.append(np.array(_next_obs), (num + 1) / 100.0)
+        _, _, _, _, _, _, x, z, t = _next_obs
+        next_obs = np.append(np.array(np.array([x, z, t])), (num + 1) / 100.0)
 
         # Normalised action TODO: Define this relative to the env so it's consistent
         action = np.array(item['action']) * 4.0
@@ -108,21 +108,22 @@ def convert_data(env, json_data):
 # ---------------------------- ENVIRONMENT & AGENT ----------------------------
 
 
-def get_checkpointer(should_save, dir_name, checkpoint):
+def get_checkpointer(should_save, dir_name, checkpoint, phase="all"):
     if should_save and checkpoint is not None:
         checkpoint_callback = CheckpointCallback(
             save_freq=checkpoint,
             save_path=f"models/{dir_name}/training_logs/",
             name_prefix="checkpoint",
             save_replay_buffer=False,
-            save_vecnormalize=True)
+            save_vecnormalize=True,
+            phase=phase)
         return checkpoint_callback
     return None
 
 
-def get_env(dir_name, render_mode):
-    env = HoveringWrapper(MemoryWrapper(PositionWrapper(TwoDimWrapper(
-        SymmetricWrapper(BulletDroneEnv(render_mode=render_mode))))))
+def get_env(dir_name, render_mode, phase):
+    env = HoveringWrapper(PositionWrapper(TwoDimWrapper(
+        SymmetricWrapper(BulletDroneEnv(render_mode=render_mode, phase=phase)))))
 
     if dir_name is not None:
         env = CustomMonitor(env, f"models/{dir_name}/logs")
@@ -134,7 +135,7 @@ def get_agent(algorithm, env, demo_path, show_demos_in_env, hyperparams):
     _policy = "MlpPolicy"
     _seed = 0
     _batch_size = hyperparams.get("batch_size", 64)
-    _policy_kwargs = dict(net_arch=[128, 128, 128, 64])
+    _policy_kwargs = dict(net_arch=[128, 128, 64])
     _lr_schedular = LinearLearningRateSchedule(hyperparams.get("lr", 0.0002))
 
     print_green(f"Hyperparamters: seed={_seed}, batch_size={_batch_size}, policy_kwargs={_policy_kwargs}, " + (
@@ -200,8 +201,9 @@ def pre_train(agent, env, demo_path, show_demos_in_env):
     data = get_buffer_data(env, demo_path, show_demos_in_env)
     print("Buffer Size: ", agent.replay_buffer.size())
 
-    for obs, next_obs, action, reward, done, info in data:
-        agent.replay_buffer.add(obs, next_obs, action, reward, done, info)
+    for i in range(5):
+        for obs, next_obs, action, reward, done, info in data:
+            agent.replay_buffer.add(obs, next_obs, action, reward, done, info)
     print("Buffer Size: ", agent.replay_buffer.size())
     print_green("Pretraining Complete!")
 
@@ -210,13 +212,13 @@ def pre_train(agent, env, demo_path, show_demos_in_env):
 
 
 def main(algorithm, timesteps, filename, render_mode, demo_path, should_show_demo, checkpoint, hyperparams,
-         existing_agent, save_replay_buffer):
+         existing_agent, save_replay_buffer, phase):
 
     save_data = filename is not None
     dir_name = make_dir(filename)
 
-    env = get_env(dir_name, render_mode)
-    checkpoint_callback = get_checkpointer(save_data, dir_name, checkpoint)
+    env = get_env(dir_name, render_mode, phase)
+    checkpoint_callback = get_checkpointer(save_data, dir_name, checkpoint, phase)
 
     if existing_agent is None:
         agent = get_agent(algorithm, env, demo_path, should_show_demo, hyperparams)
@@ -235,7 +237,7 @@ def main(algorithm, timesteps, filename, render_mode, demo_path, should_show_dem
     env.close()
 
     if save_data:
-        generate_graphs(directory=f"models/{dir_name}")
+        generate_graphs(directory=f"models/{dir_name}", phase=phase)
 
 
 def parse_arguments():
@@ -275,6 +277,10 @@ def parse_arguments():
     parser.add_argument("-i", "--trained-agent", help="Path to a pretrained agent to continue training",
                         default=None, type=str, required=False)
 
+    # Train particular phase
+    parser.add_argument("-p", "--phase", type=str, choices=["approaching", "all"], default="all",
+                        help="Train a particular phase of a the system.")
+
     return parser.parse_args()
 
 
@@ -291,6 +297,7 @@ if __name__ == "__main__":
         checkpoint = None
     trained_agent = args.trained_agent
     save_replay_buffer = args.save_replay_buffer
+    phase = args.phase
 
     if algorithm != "SACfD" and demo_path is not None:
         print_red("WARNING: Demo path provided will NOT be used by this algorithm!")
@@ -319,4 +326,4 @@ if __name__ == "__main__":
             print_red(f"\nUnknown Hyperparameter: {key}")
 
     main(algorithm, timesteps, filename, render_mode, demo_path, should_show_demo, checkpoint, hyperparams,
-         trained_agent, save_replay_buffer)
+         trained_agent, save_replay_buffer, phase)

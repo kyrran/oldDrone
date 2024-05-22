@@ -6,7 +6,6 @@ from Gym.bullet_drone_env import BulletDroneEnv
 from Gym.Wrappers.two_dim_wrapper import TwoDimWrapper
 from Gym.Wrappers.position_wrapper import PositionWrapper
 from Gym.Wrappers.symmetric_wrapper import SymmetricWrapper
-from Gym.Wrappers.memory_wrapper import MemoryWrapper
 from Gym.Wrappers.hovering_wrapper import HoveringWrapper
 from stable_baselines3 import SAC
 from utils.graphics.plot_trajectories import plot_trajectories
@@ -31,19 +30,19 @@ class SampleTrajEnv(gym.Wrapper):
         return obs, info
 
 
-def sample_trajectories(dir, show=True, human=False):
+def sample_trajectories(dir, show=True, human=False, phase="all"):
     file_name = f"{dir}/model.zip"
     output_filename = f"{dir}/sample_trajectories.png"
-    sample_trajectories_from_file(file_name, output_filename, show, human)
+    sample_trajectories_from_file(file_name, output_filename, show, human, phase=phase)
 
 
-def sample_trajectories_from_file(file, output_filename, show=True, human=False):
-    plotting_degrees = [0, 22.5, 45, 315, 337.5]
+def sample_trajectories_from_file(file, output_filename, show=True, human=False, phase="all"):
+    plotting_degrees = [0, 11.25, 22.5, 33.75, 45]
 
     model = SAC.load(file)
     render_mode = "console" if not human else "human"
-    env = SampleTrajEnv(HoveringWrapper(MemoryWrapper(PositionWrapper(TwoDimWrapper(SymmetricWrapper(
-        BulletDroneEnv(render_mode=render_mode)))))), plotting_degrees=plotting_degrees)
+    env = SampleTrajEnv(HoveringWrapper(PositionWrapper(TwoDimWrapper(SymmetricWrapper(
+        BulletDroneEnv(render_mode=render_mode, phase=phase))))), plotting_degrees=plotting_degrees)
     model.set_env(env)
 
     num_trajectories = len(plotting_degrees)
