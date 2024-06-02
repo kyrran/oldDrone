@@ -406,6 +406,37 @@ class MavrosOffboardSuctionMission():
 
         self.ros_log_info("Waiting Over")
 
+    def confirm_next_stage(self, message, hover):
+        if rospy.has_param('mission_confirm'):
+            rospy.delete_param('mission_confirm')
+        self.ros_log_info(message + " (set ROS parameter 'mission_confirm' to 'confirm' or 'stop')")
+        while not rospy.is_shutdown():
+            if rospy.has_param('mission_confirm'):
+                user_input = rospy.get_param('mission_confirm')
+                if isinstance(user_input, str):
+                    user_input = user_input.strip().lower()
+                    if user_input == 'confirm':
+                        rospy.delete_param('mission_confirm')
+                        return True
+                    elif user_input == 'stop':
+                        rospy.delete_param('mission_confirm')
+                        return False
+                    else:
+                        rospy.delete_param('mission_confirm')
+                        self.ros_log_info("Invalid input. Please set 'mission_confirm' to 'confirm' or 'stop'.")
+                else:
+                    rospy.delete_param('mission_confirm')
+                    self.ros_log_info(
+                        "Invalid input type. Please set 'mission_confirm' to 'confirm' or 'stop': " + str(user_input))
+            if hover:
+                pose = PoseStamped()
+                pose.pose.position.x = self.pos.pose.position.x
+                pose.pose.position.y = self.pos.pose.position.y
+                pose.pose.position.z = self.pos.pose.position.z
+                self.pos_setpoint_pub.publish(pose)
+
+            rospy.sleep(1)
+
     # ----------- FLIGHT PATH METHODS -----------
     def run_full_mission(self):
         # Setpoint publishing MUST be faster than 2Hz
@@ -426,12 +457,18 @@ class MavrosOffboardSuctionMission():
 
         self.startup_mission(rate)
 
+        if not self.confirm_next_stage("Confirm Drone Takeoff", hover=False):
+            return
+
         self.ros_log_info("TAKEOFF")
         last_req = self.navigate_to_starting_position(rate, initX, initY, initZ, last_req=rospy.Time.now())
         self.ros_log_info("TAKEOFF ACHIEVED")
 
         self.ros_log_info("HOVER @ TAKEOFF POSITION 5s")
         self.hover_at_current_pos(time=3)
+
+        if not self.confirm_next_stage("Confirm Drone Move to Starting", hover=True):
+            return
 
         self.ros_log_info("NAVIGATE TO STARTING POSITION")
         x_start, y_start, z_start = self.waypoints[0]
@@ -441,10 +478,13 @@ class MavrosOffboardSuctionMission():
         self.ros_log_info("HOVER @ STARTING POSITION 10s")
         self.hover_at_current_pos(time=5)
 
+        if not self.confirm_next_stage("Confirm Start Trajectory", hover=True):
+            return
+
         self.ros_log_info("STARTING TRAJECTORY")
 
         waypoints = self.waypoints
-        time_between_waypoint = 2
+        time_between_waypoint = 1
 
         for index, (x, y, z) in enumerate(waypoints):
             self.ros_log_info("HEADING TO WAYPOINT " + str(index))
