@@ -145,13 +145,13 @@ class MavrosOffboardSuctionMission():
 
     def load_waypoints_from_file(self, filename):
         """
-        Loads waypoints from a CSV file and returns a list of (x, y, z) tuples.
+        Loads waypoints from a CSV file and returns a list of (x, y, z, h) tuples.
 
         Parameters:
         - filename: Name of the CSV file to load.
 
         Returns:
-        - List of (x, y, z) tuples representing the waypoints.
+        - List of (x, y, z, h) tuples representing the waypoints.
         """
         self.ros_log_info("Loading Trajectory from: " + filename)
         waypoints = []
@@ -161,8 +161,8 @@ class MavrosOffboardSuctionMission():
             next(csvreader)  # Skip the header row
 
             for row in csvreader:
-                x, y, z = map(float, row)
-                waypoints.append((x, y, z))
+                x, y, z, h = float(row[0]), float(row[1]), float(row[2]), row[3].lower() == 'true'
+                waypoints.append((x, y, z, h))
 
         return waypoints
 
@@ -503,7 +503,7 @@ class MavrosOffboardSuctionMission():
             return
 
         self.ros_log_info("NAVIGATE TO STARTING POSITION")
-        x_start, y_start, z_start = self.waypoints[0]
+        x_start, y_start, z_start, _ = self.waypoints[0]
         self.goto_pos(x=x_start, y=y_start, z=z_start, writeToDataLogger=False)
         self.ros_log_info("REACHED STARTING POSITION")
 
@@ -518,10 +518,16 @@ class MavrosOffboardSuctionMission():
         waypoints = self.waypoints
         time_between_waypoint = 1
 
-        for index, (x, y, z) in enumerate(waypoints):
+        approaching = True
+        for index, (x, y, z, h) in enumerate(waypoints):
+            if approaching and h:
+                # First waypoint of curling underneath so allow user to confirm
+                approaching = False
+                if not self.confirm_next_stage("Confirm Wrapping Achieved", hover=True):
+                    return
             self.ros_log_info("HEADING TO WAYPOINT " + str(index))
             prev_index = index - 1 if index - 1 >= 0 else 0
-            prev_x, prev_y, prev_z = waypoints[prev_index]
+            prev_x, prev_y, prev_z, _ = waypoints[prev_index]
             self.goto_pos_in_time(x, y, z, time_between_waypoint, prev_x, prev_y, prev_z)
 
         self.ros_log_info("TRAJECTORY ENDED")
