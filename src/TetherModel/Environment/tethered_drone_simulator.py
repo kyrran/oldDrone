@@ -18,10 +18,10 @@ class TetheredDroneSimulator:
         else:
             self.physicsClient = p.connect(p.DIRECT)
         p.setPhysicsEngineParameter(numSolverIterations=500)
-        p.setGravity(0, 0, -10)
+        p.setGravity(0, 0, -9.8)
         self.drone = Drone(self.drone_pos)
         tether_top_position = self.drone.get_world_centre_bottom()
-        self.tether = Tether(length=1.5, top_position=tether_top_position, physics_client=self.physicsClient)
+        self.tether = Tether(length=1.0, top_position=tether_top_position, physics_client=self.physicsClient)
         self.tether.attach_to_drone(drone=self.drone)
         tether_bottom_position = self.tether.get_world_centre_bottom()
         self.weight = Weight(top_position=tether_bottom_position)
@@ -63,6 +63,7 @@ class TetheredDroneSimulator:
 
         p.resetSimulation()
         p.setGravity(0, 0, -10)
+        # p.setPhysicsEngineParameter(numSolverIterations=500)
         self.drone_pos = pos
         self.drone = Drone(pos)
         tether_top_position = self.drone.get_world_centre_bottom()
