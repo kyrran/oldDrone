@@ -14,11 +14,6 @@ This repositroy contains two directories `progress_updates` and `src`:
 - `src`- main content of the repository - check out the ReadMe in that folder for more information.
 - `progress_updates` - in the process of being migrated to a private repo
 
-### Aim
-Design and Implement a Framework for Learning Agile Perching Trajectories from Non-Expert Demonstrations.
-
-Using a small number of demonstrations to perform the required task.
-Following demonstrations the agent should improve energy efficiency while still completing the perching task.
-
-### Steps
+### Usage
+Please see the readme inside the `src` folder for all usage instructions
 
