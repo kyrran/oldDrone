@@ -17,3 +17,5 @@ This repositroy contains two directories `progress_updates` and `src`:
 ### Usage
 Please see the readme inside the `src` folder for all usage instructions
 
+Data Files - These are large files including videos and trajectory data stored in OneDrive - Please request access if needed.
+[OneDrive Folder](https://imperiallondon-my.sharepoint.com/:f:/r/personal/afb23_ic_ac_uk/Documents/Shared_Folder/Tensile_Perching_Flight_Data?csf=1&web=1&e=7oB62n)
