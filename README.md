@@ -1,4 +1,4 @@
-# TommyWoodleyMEngProject
+# Agile Trajectory Generation for Tensile Perching with Aerial Robots
 
 ## Abstract
 
