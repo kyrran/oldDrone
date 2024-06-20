@@ -1,6 +1,13 @@
 # TommyWoodleyMEngProject
 
-## Project Plan
+## Abstract
+
+The utilisation of Unmanned Aerial Vehicles (UAVs) for data collection in hard-to-reach areas, such as dense forests, has garnered significant attention. However, the limited flight time of UAVs, due to their inherent battery constraints, remains a significant challenge. Existing solutions focus on increasing battery capacity or integrating energy-harvesting methods, which are often limited by environmental conditions. Inspired by birds, this project explores a tethered perching mechanism. This approach aims to conserve energy by allowing drones to perch on branches, reducing their environmental impact and enabling silent operation for wildlife observation.
+This project provides a simulation environment capable of being used for reinforcement learning for tethered drone perching. A key outcome of this project is a reinforcement learning agent capable of performing tethered drone perching. It can perform faster trajectories without the need for a long period of waiting during the manoeuvre. The approaching stage showed a 17% improvement compared to existing baselines. This agent was able to achieve a higher number of wraps around the branch leading to more stability during the latter half of the manoeuvre. Finally, the agent has been deployed on a real system using a custom drone controller. In practical experiments, this agent achieved a 93% success rate at tethered perching.
+
+## Acknowledgements
+
+I would like to extend my deepest gratitude to my project supervisor, Dr. Basaran Bahadir Kocer, for his invaluable guidance and support. Many thanks to Dr. Antoine Cully for his support as my second marker. Special thanks to Atar Babgei for his active collaboration and assistance throughout practical experiments. I would also like to thank Dr. Ronald Clark, Lucas Romanello, and Hann Nguyen for their stimulating discussions and insights.
 
 ## Structure
 This repositroy contains two directories `progress_updates` and `src`:
@@ -15,41 +22,3 @@ Following demonstrations the agent should improve energy efficiency while still 
 
 ### Steps
 
-### 1. Demonstration Data Collection:
-   - **Demonstration Acquisition**:
-        - Collect a set of trajectories including expert, poor, and incorrect demonstrations.
-        - This data will be collected from real-world human-created flights.
-      
-### 2. Tether Dynamics Model:
-   - **Data Generation for Tether Dynamics**:
-      - Utilise a physics based simulation engine for modelling tether dynamics using more accurate physics simulations.
-      - Create a dataset using physics-based simulations, varying parameters to cover a wide range of scenarios.
-   - **Supervised Learning Model**:
-      - Design a neural network to predict the position of the weight given previous positions/velocities of the drone.
-   - **Separate Training**:
-      - Train this model separately to ensure high accuracy and robustness.
-      - Validate the model's performance with new simulated data.
-
-### 3. Normalized Actor-Critic from Demonstrations
-   - **Algorithm Adaptation**:
-     - Adapt a normalized actor-critic method. [1]
-   - **Utilization of Demonstrations**:
-     - Integrate the provided demonstrations into the learning process to speed up learning.
-   - **Reward Mechanism for Task Success**:
-     - Design a reward mechanism that uses the critical milestones of the task, such as the number of wraps achieved around the pole and successful disarmament, ensuring these key objectives are directly incentivized. This can be calculated using the tether dynamics model so that it can be used in simulation environments that dont typically support.
-   - **Prioritized Replay of Demonstrations**:
-     - Improve upon the NAC algorithm to implement a prioritized replay mechanism that selectively revisits important or less frequently seen demonstrations, enhancing the learning efficiency and robustness of the policy.
-
-### 4. Reward Shaping for Energy Efficiency
-   - **Thrust Cost-Based Reward Function**:
-     - Develop an additional reward component that quantifies the thrust cost, drawing inspiration from relevant literature to create a model that accurately reflects the energy expenditure of different maneuvers.
-   - **Balancing Task Achievement and Energy Efficiency**:
-     - Experiment with different weighting schemes to balance the original task-related rewards and the energy efficiency rewards, ensuring the agent learns to complete the task effectively while also optimizing for energy conservation.
-
-### 5. Evaluation and Iteration
-   - **Simulated Evaluation**:
-     - Conduct testing in a simulated environment (such as Gazebo), allowing for safe and efficient iteration.
-     - Use simulation to perform extensive hyperparameter tuning and ablation studies, ensuring the robustness and generalizability of the learned policy.
-   - **Real-World Testing**:
-     - Transition to real-world testing in a controlled environment once the policy demonstrates high proficiency in the simulation.
-     - If required utilise learning from the real world with mini-batches of demonstration or gazebo data.
