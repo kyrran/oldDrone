@@ -1,5 +1,28 @@
 # Repository
 
+## Environment
+This is the first end-to-end simulation environment capable of modelling a tethered perching environment.
+<img width="562" alt="image" src="https://github.com/TommyWoodley/TommyWoodleyMEngProject/assets/66870296/abe200bd-f16c-46ef-8a47-c44f5f3a5fec">
+
+
+### Customising the Environment
+The environment is easy to customise for the actual perching environment. All of these components can be customised and used. All properties are definied at the top of the perching environment and can be changed. The below configuration is what is used in our perching environment in the Aerial Robotics Laboratory at Imperial College London
+Drone
+  - Size: 10cm x 10cm x 5cm
+  - Weight: 250g
+- Tether:
+  - Length: 1m
+  - Number of pieces: 50
+  - Weight: 10g
+- Payload:
+  - Size: 5cm
+  - Weight: 20g
+- Branch
+  - Size: 5.0m x (2cm)
+ 
+All of these values are defined at the top of each correspondingly named code file as constants and can be adjusted as needed.
+NOTE: Please note that increasing the number of pieces can increase the computational complexity. This means that PyBullet requires a higher number of iterations to be able to solve. The current setup is quite stable. If you can see that PyBullet is not accurately modelling it then increase the number of solveIterations as defined in the `tethered_perching.py`.
+
 ## Running the Training Script
 
 To run the `main.py` file for reinforcement learning training for tethered drone perching, you need to provide several arguments to specify the configuration of the training process. Below is a description of each argument and examples of how to use them.
@@ -25,21 +48,3 @@ To run the training process for 4000 timesteps, using the Soft Actor Critic from
 ```sh
 python main.py -t 40000 -algo SACfD -o output
 ```
-
-## Customising the Environment
-The environment is easy to customise for the actual perching environment. All of these components can be customised and used. All properties are definied at the top of the perching environment and can be changed. The below configuration is what is used in our perching environment in the Aerial Robotics Laboratory at Imperial College London
-Drone
-  - Size: 10cm x 10cm x 5cm
-  - Weight: 250g
-- Tether:
-  - Length: 1m
-  - Number of pieces: 50
-  - Weight: 10g
-- Payload:
-  - Size: 5cm
-  - Weight: 20g
-- Branch
-  - Size: 5.0m x (2cm)
- 
-All of these values are defined at the top of each correspondingly named code file as constants and can be adjusted as needed.
-NOTE: Please note that increasing the number of pieces can increase the computational complexity. This means that PyBullet requires a higher number of iterations to be able to solve. The current setup is quite stable. If you can see that PyBullet is not accurately modelling it then increase the number of solveIterations as defined in the `tethered_perching.py`.
