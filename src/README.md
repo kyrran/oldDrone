@@ -23,6 +23,11 @@ Drone
 All of these values are defined at the top of each correspondingly named code file as constants and can be adjusted as needed.
 NOTE: Please note that increasing the number of pieces can increase the computational complexity. This means that PyBullet requires a higher number of iterations to be able to solve. The current setup is quite stable. If you can see that PyBullet is not accurately modelling it then increase the number of solveIterations as defined in the `tethered_perching.py`.
 
+## Training
+<img width="544" alt="image" src="https://github.com/TommyWoodley/TommyWoodleyMEngProject/assets/66870296/a4718904-e70e-49ff-8dd1-06318baca40b">
+
+<img width="563" alt="image" src="https://github.com/TommyWoodley/TommyWoodleyMEngProject/assets/66870296/3507edcf-1d18-4be8-83ae-dd7ffc450349">
+
 ## Running the Training Script
 
 To run the `main.py` file for reinforcement learning training for tethered drone perching, you need to provide several arguments to specify the configuration of the training process. Below is a description of each argument and examples of how to use them.
@@ -48,3 +53,7 @@ To run the training process for 4000 timesteps, using the Soft Actor Critic from
 ```sh
 python main.py -t 40000 -algo SACfD -o output
 ```
+
+## PX4 Controller
+This repos contains the original version of the controller using ROS1.
+The updated version is [https://github.com/TommyWoodley/ROS2_PX4_Offboard_Perching_Drone](https://github.com/TommyWoodley/ROS2_PX4_Offboard_Perching_Drone)
