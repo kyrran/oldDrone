@@ -1,25 +1,22 @@
 import pybullet as p
 import numpy as np
-
+import os
 
 class Drone:
-    # Half width, Half height, Half length
-    WIDTH: float = 0.1
-    LENGTH: float = 0.1
-    HEIGHT: float = 0.05
     MASS: float = 1.0
-    _body_centre_bottom = np.array([0, 0, - HEIGHT], dtype=np.float32)
+    _body_centre_bottom = np.array([0, 0, -0.05], dtype=np.float32)  # Adjust as needed for your drone model
 
     def __init__(self, start_pos: np.ndarray) -> None:
         self.startPos = start_pos
         self.startOrientation = p.getQuaternionFromEuler([0, 0, 0])
-        self.halfExtents = [self.WIDTH, self.LENGTH, self.HEIGHT]  # half width, length, and height of the drone box
+        urdf_path = "./cf2x.urdf"
 
-        # The drone is represented by a simple box
-        collisionShapeId = p.createCollisionShape(p.GEOM_BOX, halfExtents=self.halfExtents)
-        visualShapeId = p.createVisualShape(p.GEOM_BOX, halfExtents=self.halfExtents, rgbaColor=[1, 0, 0, 1])
-        mass = self.MASS
-        self.model = p.createMultiBody(mass, collisionShapeId, visualShapeId, self.startPos, self.startOrientation)
+        # Check if the URDF file exists
+        if not os.path.isfile(urdf_path):
+            raise FileNotFoundError(f"URDF file not found: {urdf_path}")
+
+        # Load the URDF model
+        self.model = p.loadURDF(urdf_path, self.startPos, self.startOrientation)
 
     def movement(self) -> None:
         # Set horizontal velocity for the drone
@@ -49,7 +46,7 @@ class Drone:
         position, _ = p.getBasePositionAndOrientation(self.model)
 
         # bottom centre of the drone is the centre along com minus the half height
-        return np.array([position[0], position[1], position[2] - self.HEIGHT], dtype=np.float32)
+        return np.array([position[0], position[1], position[2] - 0.05], dtype=np.float32)  # Adjust as needed
 
     def get_world_centre_centre(self) -> np.ndarray:
         # current position of the drone
