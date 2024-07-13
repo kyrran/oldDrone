@@ -7,7 +7,7 @@ import numpy as np
 import glob
 import os
 
-DEMO_PATH = "/home/kangle/Documents/FYP/TommyWoodleyMEngProject/src/Demonstrations/rl_demos"
+DEMO_PATH = "/home/kangle/Documents/FYP/oldDrone/src/Demonstrations/rl_demos"
 DEFAULT_CHECKPOINT = 5000
 
 # ---------------------------------- RL UTIL ----------------------------------
